@@ -1,0 +1,25 @@
+{
+  "name": "news-portal",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "mysql2": "^3.24.6",
+    "next": "^16.4.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.30",
+    "@types/react": "19.1.8",
+    "@types/react-dom": "19.1.7",
+    "eslint": "^9.39.5",
+    "typescript": "5.8.3",
+    "typescript-eslint": "^8.72.0"
+  }
+}
