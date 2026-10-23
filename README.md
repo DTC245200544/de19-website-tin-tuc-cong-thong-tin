@@ -49,14 +49,43 @@ Grafana dùng `GRAFANA_ADMIN_USER`/`GRAFANA_ADMIN_PASSWORD` trong `.env`. Promet
 
 MySQL exporter dùng tài khoản chỉ có quyền `PROCESS`, `REPLICATION CLIENT`, `SELECT`; Docker stats exporter truy cập Docker Engine để lấy CPU/RAM/network của container. Docker socket là quyền nhạy cảm gần tương đương quyền điều khiển Docker daemon, chỉ dùng cấu hình này trên máy demo tin cậy và không công khai cổng exporter.
 
-Ứng dụng chạy non-root; MySQL không publish cổng ra host và chỉ nằm trong network nội bộ. phpMyAdmin chỉ bind vào loopback máy local. Đây là cấu hình demo học tập, chưa phải cấu hình production.
+## Logging và truy vấn LogQL
+
+Promtail gửi log container tới Loki; trong Grafana → **Explore**, chọn datasource Loki và chạy:
+
+```logql
+{service="nginx"}
+```
+
+```logql
+{service="app"} |= "error"
+```
+
+```logql
+{service="nginx"} |~ " 4[0-9][0-9] "
+```
+
+Truy vấn thứ hai chỉ có kết quả khi ứng dụng ghi dòng có `error`; truy vấn thứ ba lọc HTTP 4xx theo định dạng access log.
+
+## Hardening và giới hạn demo
+
+Ứng dụng chạy non-root; root filesystem của app chỉ đọc, capabilities bị loại bỏ và cookie admin là HttpOnly/SameSite. Nginx chạy non-root, thêm security headers và giới hạn tần suất đăng nhập. MySQL không publish cổng ra host và chỉ nằm trong network nội bộ; phpMyAdmin/Grafana/Prometheus chỉ bind loopback máy local.
+
+Promtail và Docker stats exporter cần quyền đọc Docker socket, nên chạy root trong container. Docker socket có quyền điều khiển Docker daemon: không công khai socket/exporter, chỉ dùng trên máy tin cậy. Đây là stack demo học tập, Nginx hiện dùng HTTP với security headers, chưa bật TLS và chưa phải cấu hình production.
 
 ## Lệnh hữu ích
 
 ```powershell
+docker compose ps
 docker compose logs -f app
 docker compose logs -f mysql
 docker compose down
 ```
 
 `docker compose down -v` sẽ xóa volume database và toàn bộ dữ liệu, chỉ dùng khi muốn bắt đầu lại.
+
+## Mốc triển khai
+
+1. `feat: add news portal with mysql and nginx` — ứng dụng, MySQL/phpMyAdmin, Nginx reverse proxy.
+2. `feat: add prometheus and grafana monitoring` — exporters, Prometheus, datasource và dashboard Grafana.
+3. `feat: add loki promtail centralized logging` — Loki, Promtail, LogQL và tài liệu hardening.
