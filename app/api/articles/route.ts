@@ -11,6 +11,7 @@ type ArticleRow = RowDataPacket & {
   slug: string;
   content: string;
   category: string;
+  category_slug: string;
   published_at: Date | null;
   status: string;
 };
@@ -23,9 +24,13 @@ function createSlug(title: string): string {
 export async function GET(request: NextRequest) {
   const showAll = request.nextUrl.searchParams.get("all") === "1";
   if (showAll && !(await isAdminSession())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const statusFilter = showAll ? "" : "WHERE a.status = 'published'";
+  const categorySlug = request.nextUrl.searchParams.get("category");
+  const statusFilter = showAll ? "" : "a.status = 'published'";
+  const categoryFilter = categorySlug ? `${statusFilter ? " AND " : ""}c.slug = ?` : "";
+  const where = statusFilter || categoryFilter ? `WHERE ${statusFilter}${categoryFilter}` : "";
   const [rows] = await getDb().query<ArticleRow[]>(
-    `SELECT a.id, a.title, a.slug, a.content, a.status, a.published_at, c.name AS category FROM articles a JOIN categories c ON c.id = a.category_id ${statusFilter} ORDER BY COALESCE(a.published_at, a.created_at) DESC LIMIT 50`,
+    `SELECT a.id, a.title, a.slug, a.content, a.status, a.published_at, c.name AS category, c.slug AS category_slug FROM articles a JOIN categories c ON c.id = a.category_id ${where} ORDER BY COALESCE(a.published_at, a.created_at) DESC LIMIT 50`,
+    categorySlug ? [categorySlug] : [],
   );
   return NextResponse.json(rows.map((article) => ({
     ...article,
