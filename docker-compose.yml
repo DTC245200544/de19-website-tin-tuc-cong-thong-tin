@@ -43,6 +43,7 @@ services:
       - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     networks:
       - data
+      - monitoring
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
       interval: 10s
@@ -81,6 +82,7 @@ services:
       - app
     networks:
       - edge
+      - monitoring
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -88,8 +90,110 @@ services:
     cap_add:
       - NET_BIND_SERVICE
 
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.4.2
+    command: ["--nginx.scrape-uri=http://nginx:8080/stub_status"]
+    depends_on:
+      - nginx
+    networks:
+      - monitoring
+
+  mysql-exporter:
+    image: prom/mysqld-exporter:v0.17.2
+    command:
+      - "--mysqld.address=mysql:3306"
+      - "--mysqld.username=news_exporter"
+    environment:
+      MYSQLD_EXPORTER_PASSWORD: ${MYSQL_EXPORTER_PASSWORD:?Set MYSQL_EXPORTER_PASSWORD in .env}
+    depends_on:
+      mysql-exporter-setup:
+        condition: service_completed_successfully
+    networks:
+      - monitoring
+      - data
+
+  mysql-exporter-setup:
+    image: mysql:8.4
+    restart: "no"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        mysql --host=mysql --user=root --password="$$MYSQL_ROOT_PASSWORD"
+        --execute="CREATE USER IF NOT EXISTS 'news_exporter'@'%' IDENTIFIED BY '$$MYSQL_EXPORTER_PASSWORD';
+        GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'news_exporter'@'%';"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_EXPORTER_PASSWORD: ${MYSQL_EXPORTER_PASSWORD:?Set MYSQL_EXPORTER_PASSWORD in .env}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - data
+
+  docker-stats-exporter:
+    image: node:22-alpine
+    command: ["node", "/app/server.mjs"]
+    user: "0:0"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - ./monitoring/docker-stats-exporter.mjs:/app/server.mjs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - monitoring
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=7d"
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      - nginx-exporter
+      - mysql-exporter
+      - docker-stats-exporter
+    networks:
+      - monitoring
+    security_opt:
+      - no-new-privileges:true
+
+  grafana:
+    image: grafana/grafana:12.1.1
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:?Set GRAFANA_ADMIN_USER in .env}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring
+    security_opt:
+      - no-new-privileges:true
+
 volumes:
   mysql_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   edge:
@@ -97,3 +201,8 @@ networks:
   data:
     driver: bridge
     internal: true
+  monitoring:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24

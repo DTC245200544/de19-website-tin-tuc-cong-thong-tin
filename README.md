@@ -30,6 +30,8 @@ docker compose ps
 | Website qua Nginx | http://localhost:8080 |
 | Trang quản trị | http://localhost:8080/admin |
 | phpMyAdmin | http://localhost:8081 |
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3000 |
 
 Admin dùng `ADMIN_EMAIL` và `ADMIN_PASSWORD` trong `.env`. phpMyAdmin đăng nhập bằng `MYSQL_USER`/`MYSQL_PASSWORD`.
 
@@ -39,6 +41,13 @@ Admin dùng `ADMIN_EMAIL` và `ADMIN_PASSWORD` trong `.env`. phpMyAdmin đăng n
 - Khu vực admin đăng nhập, lưu bản nháp và xuất bản bài.
 - MySQL lưu bài viết và danh mục; dữ liệu mẫu được nạp khi database khởi tạo lần đầu.
 - Nginx reverse proxy, security headers, giới hạn kích thước request và giới hạn tần suất đăng nhập.
+- Prometheus, exporters và Grafana giám sát Nginx, MySQL và Docker containers.
+
+## Monitoring
+
+Grafana dùng `GRAFANA_ADMIN_USER`/`GRAFANA_ADMIN_PASSWORD` trong `.env`. Prometheus → **Status → Targets** cần có các job `prometheus`, `nginx`, `mysql`, `containers` ở trạng thái **UP**. Grafana provision sẵn dashboard **News Portal Overview**; các metric gồm `news_portal_container_cpu_percent`, `news_portal_container_memory_usage_bytes`, `nginx_http_requests_total`, và `mysql_global_status_threads_connected`.
+
+MySQL exporter dùng tài khoản chỉ có quyền `PROCESS`, `REPLICATION CLIENT`, `SELECT`; Docker stats exporter truy cập Docker Engine để lấy CPU/RAM/network của container. Docker socket là quyền nhạy cảm gần tương đương quyền điều khiển Docker daemon, chỉ dùng cấu hình này trên máy demo tin cậy và không công khai cổng exporter.
 
 Ứng dụng chạy non-root; MySQL không publish cổng ra host và chỉ nằm trong network nội bộ. phpMyAdmin chỉ bind vào loopback máy local. Đây là cấu hình demo học tập, chưa phải cấu hình production.
 
