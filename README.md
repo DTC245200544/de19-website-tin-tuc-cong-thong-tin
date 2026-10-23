@@ -27,8 +27,8 @@ docker compose ps
 
 | Thành phần | URL |
 |---|---|
-| Website qua Nginx | http://localhost:8080 |
-| Trang quản trị | http://localhost:8080/admin |
+| Website qua Nginx | http://bantinmoi.test |
+| Trang quản trị | http://bantinmoi.test/admin |
 | phpMyAdmin | http://localhost:8081 |
 | Prometheus | http://localhost:9090 |
 | Grafana | http://localhost:3000 |
@@ -38,10 +38,33 @@ Admin dùng `ADMIN_EMAIL` và `ADMIN_PASSWORD` trong `.env`. phpMyAdmin đăng n
 ## Chức năng
 
 - Trang chủ liệt kê và lọc tin theo danh mục; trang chi tiết bài viết.
+- Có 14 chuyên mục, mỗi chuyên mục có trang tin và breadcrumb riêng; bài mẫu dùng ảnh chụp minh họa khác nhau theo chủ đề.
 - Khu vực admin đăng nhập, lưu bản nháp và xuất bản bài.
 - MySQL lưu bài viết và danh mục; dữ liệu mẫu được nạp khi database khởi tạo lần đầu.
 - Nginx reverse proxy, security headers, giới hạn kích thước request và giới hạn tần suất đăng nhập.
 - Prometheus, exporters và Grafana giám sát Nginx, MySQL và Docker containers.
+- Ảnh minh họa được tải sẵn từ [Unsplash](https://unsplash.com/license), vì vậy website không phụ thuộc dịch vụ ảnh bên ngoài khi chạy.
+
+`bantinmoi.test` là tên local dành cho demo, không phải tên miền Internet công khai. Lần đầu tiên, chạy `.\scripts\setup-local-domain.ps1` trong PowerShell để thêm tên này vào Windows hosts; chấp nhận hộp thoại quyền quản trị. Nếu không muốn thay đổi hosts, tiếp tục dùng `http://localhost`. Tên miền công khai `.com.vn` cần đăng ký riêng và DNS trỏ tới máy chủ công khai.
+
+Nguồn ảnh chụp mẫu:
+
+| Chuyên mục | Nguồn |
+|---|---|
+| Thời sự | [Unsplash](https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b) |
+| Kinh doanh | [Unsplash](https://images.unsplash.com/photo-1460925895917-afdab827c52f) |
+| Công nghệ | [Unsplash](https://images.unsplash.com/photo-1518770660439-4636190af475) |
+| Giáo dục | [Unsplash](https://images.unsplash.com/photo-1509062522246-3755977927d7) |
+| Sức khỏe | [Unsplash](https://images.unsplash.com/photo-1576091160399-112ba8d25d1d) |
+| Đời sống | [Unsplash](https://images.unsplash.com/photo-1517248135467-4c7edcad34c4) |
+| Văn hóa | [Unsplash](https://images.unsplash.com/photo-1577083552431-6e5fd01aa342) |
+| Thể thao | [Unsplash](https://images.unsplash.com/photo-1461896836934-ffe607ba8211) |
+| Du lịch | [Unsplash](https://images.unsplash.com/photo-1464822759023-fed622ff2c3b) |
+| Ô tô - Xe máy | [Unsplash](https://images.unsplash.com/photo-1492144534655-ae79c964c9d7) |
+| Thời trang | [Unsplash](https://images.unsplash.com/photo-1539109136881-3be0616acf4b) |
+| Pháp luật | [Unsplash](https://images.unsplash.com/photo-1589829545856-d10d557cf95f) |
+| Môi trường | [Unsplash](https://images.unsplash.com/photo-1441974231531-c6227db76b6e) |
+| Thế giới | [Unsplash](https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1) |
 
 ## Monitoring
 
