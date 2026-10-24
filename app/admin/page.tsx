@@ -26,10 +26,12 @@ export default function AdminPage() {
     fetch("/api/auth/session")
       .then((response) => response.json())
       .then(async (data: { authenticated: boolean }) => {
-        setAuthenticated(data.authenticated);
-        if (data.authenticated) await loadAdminData();
+        if (data.authenticated) {
+          await loadAdminData();
+          setAuthenticated(true);
+        }
       })
-      .catch(() => setMessage("Không thể kết nối dịch vụ."))
+      .catch(() => setMessage("Không tải được dữ liệu quản trị. Vui lòng tải lại trang."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -45,9 +47,13 @@ export default function AdminPage() {
       setMessage("Email hoặc mật khẩu không đúng.");
       return;
     }
-    setAuthenticated(true);
-    setPassword("");
-    await loadAdminData();
+    try {
+      await loadAdminData();
+      setAuthenticated(true);
+      setPassword("");
+    } catch {
+      setMessage("Đăng nhập thành công nhưng không tải được dữ liệu quản trị. Vui lòng tải lại trang.");
+    }
   }
 
   async function publish(event: FormEvent<HTMLFormElement>) {

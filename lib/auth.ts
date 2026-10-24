@@ -19,13 +19,13 @@ export function isValidAdminPassword(candidate: string): boolean {
   return timingSafeEqual(candidateHash, expectedHash);
 }
 
-export async function createAdminSession(): Promise<void> {
+export async function createAdminSession(secure: boolean): Promise<void> {
   const value = "admin";
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, `${value}.${signature(value)}`, {
     httpOnly: true,
     sameSite: "strict",
-    secure: process.env.NODE_ENV === "production",
+    secure,
     path: "/",
     maxAge: 60 * 60 * 8,
   });

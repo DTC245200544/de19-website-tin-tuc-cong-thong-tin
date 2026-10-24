@@ -24,7 +24,12 @@ type ArticleRow = RowDataPacket & {
 
 function formatDate(value: Date | null): string {
   return value
-    ? new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }).format(value)
+    ? new Intl.DateTimeFormat("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        timeZone: "Asia/Ho_Chi_Minh",
+      }).format(value)
     : "Vừa cập nhật";
 }
 

@@ -11,6 +11,8 @@ export async function POST(request: NextRequest) {
   if (!expectedEmail || email !== expectedEmail || !isValidAdminPassword(password)) {
     return NextResponse.json({ error: "Email hoặc mật khẩu không đúng." }, { status: 401 });
   }
-  await createAdminSession();
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0].trim();
+  const isHttps = forwardedProto ? forwardedProto === "https" : request.nextUrl.protocol === "https:";
+  await createAdminSession(isHttps);
   return NextResponse.json({ authenticated: true });
 }

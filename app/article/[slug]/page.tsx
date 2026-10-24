@@ -57,7 +57,12 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   const { lead, blocks } = parseContent(article.content);
   const readingMinutes = Math.max(1, Math.ceil((article.content.match(/\S+/g)?.length ?? 0) / 200));
   const formattedDate = article.published_at
-    ? new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "long", year: "numeric" }).format(article.published_at)
+    ? new Intl.DateTimeFormat("vi-VN", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        timeZone: "Asia/Ho_Chi_Minh",
+      }).format(article.published_at)
     : "Vừa cập nhật";
   const sections = blocks.filter((block): block is Extract<ArticleBlock, { type: "heading" }> => block.type === "heading");
 
